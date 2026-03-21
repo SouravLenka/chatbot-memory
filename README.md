@@ -57,5 +57,11 @@ streamlit run app.py
 
 ## ⚠️ Configuration
 
-- **Default Model**: `meta-llama/Llama-3.1-8B-Instruct`.
-- **Context Window**: Maintains a rolling context of previous messages for seamless dialogue.
+- **Default Model**: `meta-llama/Llama-3.1-8B-Instruct` (via Hugging Face Router).
+- **Context Management**: 
+    - **Memory Summary**: Uses LLM-generated summaries to maintain context across long conversations.
+    - **Rolling Window**: Combines the last 10 messages with the summary for maximum relevance.
+- **Search Router**: Intelligently switches between arXiv (research), Wikipedia (concepts), and Tavily (web) based on query semantics.
+
+---
+*Created with ❤️ for scholarly research.*
