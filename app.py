@@ -3,6 +3,12 @@ import json
 import os
 import time
 from model import generate_response
+from retriever import get_context
+
+# --- STUDY FILTER ---
+def is_study_related(prompt):
+    keywords = ["study", "research", "science", "math", "ai", "physics", "biology", "history", "university", "paper", "concept"]
+    return any(k in prompt.lower() for k in keywords) or "?" in prompt
 
 # Branding
 st.set_page_config(page_title="BodhAI", page_icon="📘")
@@ -118,6 +124,10 @@ prompt = st.chat_input("Ask your research question")
 
 
 if prompt:
+    # --- STUDY FILTER CHECK ---
+    if not is_study_related(prompt):
+        st.warning("Please ask only academic or research-related queries.")
+        st.stop()
 
     # Add user message
     user_message = {"role": "user", "content": prompt}
@@ -131,17 +141,40 @@ if prompt:
         new_title = prompt[:30] + ("..." if len(prompt) > 30 else "")
         chat_title = new_title
 
-    # System prompt
+    # --- GET EXTERNAL CONTEXT ---
+    with st.spinner(f"Searching archives..."):
+        context_data, source = get_context(prompt)
+
+    # --- UPDATED LLM PROMPT ---
     system_prompt = {
         "role": "system",
-        "content": "You are BodhAI, a helpful academic research assistant. You provide clear, accurate, and scholarly information. You only answer academic-related queries."
+        "content": "You are BodhAI, a helpful academic research assistant. You provide clear, accurate, and scholarly information. Use the provided context to answer questions."
     }
 
-    # Send last messages to model
-    context = [system_prompt] + messages[-12:]
+    # Inject context into the latest message for the LLM
+    augmented_user_message = {
+        "role": "user",
+        "content": f"""
+User Question:
+{prompt}
+
+Relevant Information from {source}:
+{context_data}
+
+Use this information to give an accurate academic answer.
+Also mention the source in your answer.
+"""
+    }
+
+    # Send messages to model (System + previous history + current augmented message)
+    # We use a limited history to keep context windows reasonable
+    llm_messages = [system_prompt] + messages[-11:-1] + [augmented_user_message]
 
     try:
-        response = generate_response(context, model_id=selected_model_id)
+        response = generate_response(llm_messages, model_id=selected_model_id)
+        if response:
+            # Add Source in Output
+            response += f"\n\n📚 Source: {source}"
 
     except Exception as e:
         st.error(f"Failed to get response from the model. Error: {e}")
