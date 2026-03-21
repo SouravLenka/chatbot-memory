@@ -5,19 +5,23 @@ A simple Streamlit chatbot for student research help. The app sends chat message
 ## Features
 
 - Streamlit chat interface
+- Model selection from sidebar (Llama 3.1, 3.2, 3.3)
 - Local chat memory saved to `memory.json`
 - Sidebar button to clear saved chat history
+- Conversation export (Download chat as .txt)
 - Model responses generated through the OpenAI Python client
+- Improved error handling with user-friendly messages
 - Environment-based API token setup with `.env`
 
 ## Project Structure
 
 ```text
 chatbot-memory/
-|-- app.py         # Streamlit UI and chat memory handling
-|-- model.py       # Model client setup and response generation
-|-- memory.json    # Stored conversation history
-|-- .env           # Hugging Face token (local only)
+|-- app.py             # Streamlit UI and chat memory handling
+|-- model.py           # Model client setup and response generation
+|-- memory.json        # Stored conversation history
+|-- requirements.txt   # Project dependencies
+|-- .env               # Hugging Face token (local only)
 |-- .gitignore
 ```
 
@@ -58,7 +62,9 @@ python -m venv venv
 2. Install dependencies.
 
 ```powershell
-pip install streamlit openai python-dotenv
+```powershell
+pip install -r requirements.txt
+```
 ```
 
 3. Add your Hugging Face token to `.env`.

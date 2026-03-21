@@ -1,37 +1,128 @@
 import streamlit as st
 import json
+import os
+import time
 from model import generate_response
 
-st.title("Student Research Chatbot")
+# Branding
+st.set_page_config(page_title="BodhAI - Study Research Assistant", page_icon="📘")
+st.title("📘 BodhAI - Study Research Assistant")
+st.caption("Study Mode Enabled: Only academic queries allowed")
 
-MEMORY_FILE = "memory.json"
+SESSIONS_DIR = "sessions"
+if not os.path.exists(SESSIONS_DIR):
+    os.makedirs(SESSIONS_DIR)
 
-# Load memory
-def load_memory():
+# Session Management Functions
+def get_session_files():
+    files = [f for f in os.listdir(SESSIONS_DIR) if f.endswith(".json")]
+    # Sort by modification time (newest first)
+    files.sort(key=lambda x: os.path.getmtime(os.path.join(SESSIONS_DIR, x)), reverse=True)
+    return files
+
+def load_session(session_id):
     try:
-        with open(MEMORY_FILE, "r") as f:
+        with open(os.path.join(SESSIONS_DIR, session_id), "r") as f:
             return json.load(f)
     except:
-        return []
+        return {"title": "New Chat", "messages": []}
 
-# Save memory
-def save_memory(messages):
-    with open(MEMORY_FILE, "w") as f:
-        json.dump(messages, f, indent=2)
+def save_session(session_id, title, messages):
+    data = {"title": title, "messages": messages}
+    with open(os.path.join(SESSIONS_DIR, session_id), "w") as f:
+        json.dump(data, f, indent=2)
 
-# Initialize session memory
-if "messages" not in st.session_state:
-    st.session_state.messages = load_memory()
+def create_new_session():
+    session_id = f"chat_{int(time.time())}.json"
+    save_session(session_id, "New Chat", [])
+    return session_id
 
-messages = st.session_state.messages
+def delete_session(session_id):
+    path = os.path.join(SESSIONS_DIR, session_id)
+    if os.path.exists(path):
+        os.remove(path)
+
+# Initialize Session State
+if "current_session_id" not in st.session_state:
+    sessions = get_session_files()
+    if sessions:
+        st.session_state.current_session_id = sessions[0]
+    else:
+        st.session_state.current_session_id = create_new_session()
+
+# Load current session data
+session_id = st.session_state.current_session_id
+session_data = load_session(session_id)
+messages = session_data["messages"]
+chat_title = session_data["title"]
 
 
-# Sidebar controls
-if st.sidebar.button("Clear Chat Memory"):
-    st.session_state.messages = []
-    save_memory([])
+# --- SIDEBAR ---
+st.sidebar.header("📂 Your Research Chats")
+
+# New Chat Button
+if st.sidebar.button("➕ New Chat"):
+    st.session_state.current_session_id = create_new_session()
     st.rerun()
 
+# Session Selection
+sessions = get_session_files()
+if sessions:
+    # Build options list with titles
+    session_options = {f: load_session(f)["title"] for f in sessions}
+    
+    # We need to find the index of the current session
+    try:
+        current_index = sessions.index(st.session_state.current_session_id)
+    except ValueError:
+        current_index = 0
+        if sessions:
+            st.session_state.current_session_id = sessions[0]
+
+    selected_sid = st.sidebar.selectbox(
+        "Select Chat",
+        sessions,
+        index=current_index,
+        format_func=lambda x: session_options[x]
+    )
+    
+    if selected_sid != st.session_state.current_session_id:
+        st.session_state.current_session_id = selected_sid
+        st.rerun()
+
+# Sidebar options header
+st.sidebar.divider()
+st.sidebar.header("Options")
+
+# Model selection
+MODELS = {
+    "Llama 3.1 8B": "meta-llama/Llama-3.1-8B-Instruct",
+    "Llama 3.2 11B Vision": "meta-llama/Llama-3.2-11B-Vision-Instruct",
+    "Llama 3.2 1B": "meta-llama/Llama-3.2-1B-Instruct",
+    "Llama 3.3 70B": "meta-llama/Llama-3.3-70B-Instruct"
+}
+selected_model_name = st.sidebar.selectbox("Select Model", list(MODELS.keys()))
+selected_model_id = MODELS[selected_model_name]
+
+# Download chat history
+if messages:
+    chat_text = "\n".join([f"{msg['role'].capitalize()}: {msg['content']}" for msg in messages])
+    st.sidebar.download_button(
+        label="📥 Download This Chat",
+        data=chat_text,
+        file_name=f"{chat_title.replace(' ', '_')}.txt",
+        mime="text/plain"
+    )
+
+# Delete Chat Button
+if st.sidebar.button("🗑️ Delete Current Chat", type="secondary"):
+    delete_session(st.session_state.current_session_id)
+    # Clear session ID so it gets re-initialized
+    del st.session_state.current_session_id
+    st.rerun()
+
+
+# --- MAIN CHAT AREA ---
 
 # Display chat history
 for msg in messages:
@@ -52,29 +143,37 @@ if prompt:
     with st.chat_message("user"):
         st.write(prompt)
 
+    # Auto-generate Title for new chats
+    if chat_title == "New Chat" and len(messages) == 1:
+        new_title = prompt[:30] + ("..." if len(prompt) > 30 else "")
+        chat_title = new_title
+
     # System prompt
     system_prompt = {
         "role": "system",
-        "content": "You are a helpful research assistant chatbot for students. Provide clear and accurate explanations."
+        "content": "You are BodhAI, a helpful academic research assistant. You provide clear, accurate, and scholarly information. You only answer academic-related queries."
     }
 
     # Send last messages to model
     context = [system_prompt] + messages[-12:]
 
     try:
-        response = generate_response(context)
+        response = generate_response(context, model_id=selected_model_id)
 
     except Exception as e:
-        response = f"⚠️ Error: {e}"
+        st.error(f"Failed to get response from the model. Error: {e}")
+        response = None
 
-    # Show assistant message
-    with st.chat_message("assistant"):
-        st.write(response)
+    if response:
+        # Show assistant message
+        with st.chat_message("assistant"):
+            st.write(response)
 
-    messages.append({
-        "role": "assistant",
-        "content": response
-    })
+        messages.append({
+            "role": "assistant",
+            "content": response
+        })
 
-    # Save memory
-    save_memory(messages)
+        # Save session
+        save_session(st.session_state.current_session_id, chat_title, messages)
+        st.rerun()
