@@ -18,8 +18,8 @@ def is_followup(prompt):
     return any(word in prompt.lower() for word in follow_words)
 
 # Branding
-st.set_page_config(page_title="BodhAI", page_icon="📘")
-st.title("📘 BodhAI")
+st.set_page_config(page_title="BodhAI")
+st.title("BodhAI")
 st.caption("Study Mode Enabled: Only academic queries allowed")
 
 SESSIONS_DIR = "sessions"
