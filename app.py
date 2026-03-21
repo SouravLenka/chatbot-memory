@@ -5,8 +5,8 @@ import time
 from model import generate_response
 
 # Branding
-st.set_page_config(page_title="BodhAI - Study Research Assistant", page_icon="📘")
-st.title("📘 BodhAI - Study Research Assistant")
+st.set_page_config(page_title="BodhAI", page_icon="📘")
+st.title("📘 BodhAI")
 st.caption("Study Mode Enabled: Only academic queries allowed")
 
 SESSIONS_DIR = "sessions"
