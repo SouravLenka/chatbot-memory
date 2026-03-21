@@ -5,10 +5,17 @@ import time
 from model import generate_response
 from retriever import get_context
 
-# --- STUDY FILTER ---
+# --- STUDY FILTER (Improved) ---
 def is_study_related(prompt):
-    keywords = ["study", "research", "science", "math", "ai", "physics", "biology", "history", "university", "paper", "concept"]
-    return any(k in prompt.lower() for k in keywords) or "?" in prompt
+    non_study = ["game", "movie", "song", "actor", "valorant", "netflix", "youtube"]
+    if any(word in prompt.lower() for word in non_study):
+        return False
+    return True
+
+# --- FOLLOW-UP DETECTION ---
+def is_followup(prompt):
+    follow_words = ["explain", "elaborate", "detail", "continue", "more", "expand", "why", "how"]
+    return any(word in prompt.lower() for word in follow_words)
 
 # Branding
 st.set_page_config(page_title="BodhAI", page_icon="📘")
@@ -141,33 +148,57 @@ if prompt:
         new_title = prompt[:30] + ("..." if len(prompt) > 30 else "")
         chat_title = new_title
 
-    # --- GET EXTERNAL CONTEXT ---
-    with st.spinner(f"Searching archives..."):
-        context_data, source = get_context(prompt)
+    # --- CONDITIONAL RETRIEVAL ---
+    if is_followup(prompt):
+        context_data = ""
+        source = "Previous Conversation"
+    else:
+        with st.spinner(f"Searching archives..."):
+            context_data, source = get_context(prompt)
 
-    # --- UPDATED LLM PROMPT ---
+    # --- STRENGTHENED SYSTEM PROMPT ---
     system_prompt = {
         "role": "system",
-        "content": "You are BodhAI, a helpful academic research assistant. You provide clear, accurate, and scholarly information. Use the provided context to answer questions."
+        "content": """
+You are BodhAI, a strict academic research assistant.
+
+CRITICAL RULES:
+1. Always follow the conversation context.
+2. If the user asks a follow-up question, ONLY use previous discussion.
+3. NEVER introduce unrelated topics.
+4. Use external data ONLY when needed.
+5. If context is unclear, ask for clarification instead of guessing.
+
+STRICT STUDY RULE:
+- Only answer academic questions.
+- Refuse non-study queries.
+
+FORMAT:
+- Definition
+- Key Points
+- Example
+- Conclusion
+"""
     }
 
-    # Inject context into the latest message for the LLM
+    # --- COMBINE MEMORY + CONTEXT ---
     augmented_user_message = {
         "role": "user",
         "content": f"""
 User Question:
 {prompt}
 
-Relevant Information from {source}:
+Relevant External Information:
 {context_data}
 
-Use this information to give an accurate academic answer.
-Also mention the source in your answer.
+IMPORTANT:
+- If this is a follow-up question, ONLY use previous conversation.
+- Do NOT introduce new unrelated topics.
+- Stay strictly within the discussion context.
 """
     }
 
-    # Send messages to model (System + previous history + current augmented message)
-    # We use a limited history to keep context windows reasonable
+    # Send messages to model (System + history + current augmented message)
     llm_messages = [system_prompt] + messages[-11:-1] + [augmented_user_message]
 
     try:

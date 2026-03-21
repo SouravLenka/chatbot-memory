@@ -1,53 +1,60 @@
 # 📘 BodhAI - Study Research Assistant
 
-BodhAI is a multi-session academic research assistant built with Streamlit and the Hugging Face Router API.
+BodhAI is a powerful, multi-session academic research assistant that combines large language models with real-time data retrieval from **arXiv**, **Wikipedia**, and **Tavily Web Search**. It is designed to provide structured, source-backed, and strictly academic responses.
 
-## Features
+## 🚀 Key Features
 
-- **Multi-session Support**: Create, manage, and switch between multiple research chats in the sidebar.
-- **Academic Focus**: Study-mode enabled system prompt for scholarly assistance.
-- **Auto-Title Generation**: Automatically names your chats based on your first question.
-- **Session Persistence**: Chats are saved as JSON files in the `sessions/` directory.
-- **Session Management**: Easily create and switch between multiple research chats.
-- **Clean Sidebar**: Simplified interface focused on session management.
+- **🌐 Real-Time Research**:
+    - **arXiv**: Fetches the latest research papers and summaries.
+    - **Wikipedia**: Provides concise definitions and concepts.
+    - **Tavily**: Real-time web search for the most current information.
+- **🧠 Smart Context Routing**: Automatically detects the best source for your query.
+- **🔄 Follow-up Intelligence**: Recognizes follow-up questions and prioritizes conversation memory to maintain context without unnecessary searches.
+- **🛡️ Strict Study Mode**: Only answers academic or research-related queries.
+- **📚 Source Attribution**: Every external answer cites its source (arXiv, Wikipedia, or Web).
+- **📝 Structured Responses**: Always provides answers in a clear format: Definition, Key Points, Example, and Conclusion.
+- **📂 Multi-session Support**: Create, manage, and persist multiple research chats.
 
-## Project Structure
+## 📁 Project Structure
 
 ```text
 chatbot-memory/
-|-- app.py             # BodhAI UI and session management logic
-|-- model.py           # Hugging Face Router API client
-|-- sessions/          # Directory for storing chat JSON files
+|-- app.py             # Main UI, session management, and chat logic
+|-- model.py           # LLM API client (Hugging Face Router)
+|-- retriever.py       # Intelligence layer (arXiv, Wikipedia, Tavily)
+|-- sessions/          # Directory for chat history JSON files
 |-- requirements.txt   # Project dependencies
-|-- .env               # Hugging Face API token
-|-- .gitignore
+|-- .env               # API Tokens (HF_TOKEN, TAVILY_API_KEY)
+|-- .gitignore         # Comprehensive ignore list for Python & IDEs
 ```
 
-## How It Works
+## ⚙️ Setup
 
-- `app.py`: Handles the Streamlit interface, session CRUD operations, and interaction with the model client.
-- `model.py`: Uses the `openai` Python client to connect to the Hugging Face Router.
-- `sessions/`: Each chat is stored as a JSON object containing a `title` and a list of `messages`.
-
-## Setup
-
-1. Create and activate a virtual environment.
-2. Install dependencies:
-   ```powershell
+1. **Environment**: Create and activate a virtual environment.
+2. **Dependencies**:
+   ```bash
    pip install -r requirements.txt
    ```
-3. Add your Hugging Face token to `.env`:
+3. **API Keys**: Add your tokens to a `.env` file in the root directory:
    ```env
-   HF_TOKEN="your_token_here"
+   HF_TOKEN="your_huggingface_token"
+   TAVILY_API_KEY="your_tavily_api_key"
    ```
 
-## Run the App
+## 🏃 Run the App
 
-```powershell
+```bash
 streamlit run app.py
 ```
 
-## Configuration
+## 💡 Example Queries
 
-Default model: `meta-llama/Llama-3.1-8B-Instruct`.
-Max context: Last 12 messages are sent to the model for context persistence.
+- **arXiv**: "What are the latest research papers on Transformers vs State Space Models?"
+- **Wikipedia**: "Define Quantum Entanglement."
+- **Web**: "Recent breakthroughs in battery technology for 2024."
+- **Follow-up**: "Can you elaborate on that last point?" (Uses conversation memory).
+
+## ⚠️ Configuration
+
+- **Default Model**: `meta-llama/Llama-3.1-8B-Instruct`.
+- **Context Window**: Maintains a rolling context of previous messages for seamless dialogue.
