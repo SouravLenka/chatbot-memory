@@ -94,25 +94,8 @@ if sessions:
 st.sidebar.divider()
 st.sidebar.header("Options")
 
-# Model selection
-MODELS = {
-    "Llama 3.1 8B": "meta-llama/Llama-3.1-8B-Instruct",
-    "Llama 3.2 11B Vision": "meta-llama/Llama-3.2-11B-Vision-Instruct",
-    "Llama 3.2 1B": "meta-llama/Llama-3.2-1B-Instruct",
-    "Llama 3.3 70B": "meta-llama/Llama-3.3-70B-Instruct"
-}
-selected_model_name = st.sidebar.selectbox("Select Model", list(MODELS.keys()))
-selected_model_id = MODELS[selected_model_name]
-
-# Download chat history
-if messages:
-    chat_text = "\n".join([f"{msg['role'].capitalize()}: {msg['content']}" for msg in messages])
-    st.sidebar.download_button(
-        label="📥 Download This Chat",
-        data=chat_text,
-        file_name=f"{chat_title.replace(' ', '_')}.txt",
-        mime="text/plain"
-    )
+# Default Model
+selected_model_id = "meta-llama/Llama-3.1-8B-Instruct"
 
 # Delete Chat Button
 if st.sidebar.button("🗑️ Delete Current Chat", type="secondary"):
