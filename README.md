@@ -14,6 +14,7 @@ BodhAI is a powerful, multi-session academic research assistant that combines la
 - **📚 Source Attribution**: Every external answer cites its source (arXiv, Wikipedia, or Web).
 - **📝 Structured Responses**: Always provides answers in a clear format: Definition, Key Points, Example, and Conclusion.
 - **📂 Multi-session Support**: Create, manage, and persist multiple research chats.
+- **🎨 Premium UI/UX**: Modern glassmorphic design and dark-mode styling.
 
 ## 📁 Project Structure
 

@@ -39,3 +39,9 @@ memory.json
 # System files
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
